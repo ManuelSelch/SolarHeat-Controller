@@ -1,4 +1,6 @@
 #include <ESP8266HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <ArduinoJson.h>
 
 unsigned int localPort = 4000; 
 
@@ -6,19 +8,30 @@ void updateHttp(){
   // wait for WiFi connection
   if ((WiFi.status() == WL_CONNECTED)) {
 
-    WiFiClient client;
+    WiFiClientSecure client;
+    client.setInsecure(); // Accept all certificates (for self-signed HTTPS)
+
     HTTPClient http;
 
     Serial.print("[HTTP] begin...\n");
-    String serverPath = String("https://manuelselch.de/Helmut/saveData.php?tempPump="+String(tempTank)+"&tempSolar="+String(tempSolar)+"&tempSecurity="+String(tempSecurity))+"&rel="+String(rel); 
+    String serverPath = String("https://solar-heat.manuelselch.de/temperatures"); 
     http.begin(client, serverPath.c_str()); //HTTP -- error 302
-    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    http.addHeader("Content-Type", "application/json");
 
-    Serial.print("[HTTP] POST...\n");
+    String payload = "{";
+    payload += "\"pump\":" + String(tempTank) + ",";
+    payload += "\"solar\":" + String(tempSolar) + ",";
+    payload += "\"security\":" + String(tempSecurity) + ",";
+    payload += "\"rel\":" + String(rel);
+    payload += "}";
+
+    Serial.println("[HTTP] POST with JSON:");
+    Serial.println(payload);
+
     // start connection and send HTTP header and body
     String httpRequestData = "tempPump=111&dif=222";           
     //int httpCode = http.POST(httpRequestData);
-    int httpCode = http.GET();
+    int httpCode = http.POST(payload);
 
     // httpCode will be negative on error
     if (httpCode > 0) {
@@ -26,26 +39,34 @@ void updateHttp(){
       Serial.printf("[HTTP] POST... code: %d\n", httpCode);
 
       // file found at server
-      if (httpCode == HTTP_CODE_OK) {
-        const String& payload = http.getString();
+      if (httpCode == HTTP_CODE_CREATED) {
+        const String& response = http.getString();
         Serial.println("received payload:\n<<");
-        Serial.println(payload);
+        Serial.println(response);
         Serial.println(">>");
-        String s = payload;
-        // myString.substring(from, to)
-        s.substring(0,1);
-        Serial.print("udp = ");
-        Serial.println(s);
-        
-        String s_dif = payload;
-        s_dif = s_dif.substring(2,4); // Server file has to be changed: echo "udp;dif; ... ";   example: 10, 15, 20 ... not 1 or 100 -> 2 digits
-        dif = s_dif.toInt();
 
-        handleTime(payload);
-      }else{
-        const String& payload = http.getString();
-        Serial.println("error received payload:\n<<");
-        Serial.println(payload);
+        // Allocate a JSON document 
+        StaticJsonDocument<200> doc;
+        DeserializationError jsonError = deserializeJson(doc, response);
+
+        if (!jsonError) {
+          int difVal = doc["dif"];
+          const char* timestamp = doc["timestamp"];  // example key
+
+          Serial.print("dif = ");
+          Serial.println(difVal);
+
+          // Use values
+          dif = difVal;
+          handleTime(String(timestamp));
+        } else {
+          Serial.print("Failed to parse JSON: ");
+          Serial.println(jsonError.c_str());
+        }
+      } else{
+        const String& response = http.getString();
+        Serial.println("error invalid status, received:\n<<");
+        Serial.println(response);
         Serial.println(">>");
       }
     } else {

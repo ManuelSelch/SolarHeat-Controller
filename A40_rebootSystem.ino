@@ -18,17 +18,14 @@ String getValue(String data, char separator, int index)
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
-void handleTime(String payload){
-  String serverTime = getValue(payload,';',7); //clock: hour:min
-  int splitIndex = serverTime.indexOf(':');
-  String currentHour = serverTime.substring(0,splitIndex);
-  String currentMin = serverTime.substring(splitIndex+1);
+void handleTime(String timestamp){
+  // timestamp: timestamp
+  int splitIndex = timestamp.indexOf(':');
+  String currentHour = timestamp.substring(0,splitIndex);
+  String currentMin = timestamp.substring(splitIndex+1);
 
-  Serial.print("payload: ");
-  Serial.println(payload);
-
-  Serial.print("payload time: ");
-  Serial.println(serverTime);
+  Serial.print("timestamp:");
+  Serial.println(timestamp);
 
   Serial.print("time: ");
   Serial.print(currentHour);

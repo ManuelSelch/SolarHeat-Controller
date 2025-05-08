@@ -1,12 +1,12 @@
 #include <ESP8266WiFiMulti.h> 
 #include <ESP8266WiFi.h>
 
-char ssid[] = "Manuela"; //"FRITZ!Box 7490"; //"Stefan112"; //"FRITZ!Box 7490"; //"Manuela"; 
-char pass[] = "397549+23567&3406"; //"10078481327560957864"; //"LTAHDKD6ZEUM"; //"10078481327560957864"; //"397549+23567&3406";//"397549+23567&3406";  192.168.178.46 // 10078481327560957864
+char ssid[] = "FRITZ!Box 7490";  // "Desigual19"; 
+char pass[] = "10078481327560957864";  // "1409192034965811296634"; 
 
 void setupWifi() {
   WiFi.mode(WIFI_AP_STA); // wifi mode 
-  Serial.println("starting softAP");
+  Serial.println("connecting...");
   
   bool result = WiFi.begin(ssid, pass); //WiFi.softAP(ssid, pass);
   int i = 0;
