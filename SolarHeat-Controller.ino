@@ -32,7 +32,7 @@ void loop() {
   updateSensors();
   updateDisplay();
 
-  if (timer.timer(10000)) {
+  if (timer.timer(60000)) {
     updateHttp();
   }
 }
